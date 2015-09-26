@@ -173,7 +173,7 @@ vec3f raytrace_ray(Scene* scene, ray3f ray,int count) {
             if(intersec.mat->kr != zero3f){
                 vec3f m = 2*(abs(pointMul(ray.d, intersec.norm)) * intersec.norm + ray.d);
                 vec3f newRay = m-ray.d;
-                color += intersec.mat->kr * raytrace_ray(scene, ray3f(intersec.pos, newRay), count+1);
+                color += (intersec.mat->kr * raytrace_ray(scene, ray3f(intersec.pos, newRay), count+1));
             }
 
             //shadow
