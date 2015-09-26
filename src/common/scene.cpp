@@ -137,6 +137,8 @@ Surface* json_parse_surface(const jsonvalue& json) {
     json_set_optvalue(json, surface->frame, "frame");
     json_set_optvalue(json, surface->radius,"radius");
     json_set_optvalue(json, surface->isquad,"isquad");
+    json_set_optvalue(json, surface->iscli,"iscli");
+    json_set_optvalue(json, surface->height,"height");
     if(json.object_contains("material")) surface->mat = json_parse_material(json.object_element("material"));
     return surface;
 }

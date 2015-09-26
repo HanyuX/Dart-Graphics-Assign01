@@ -62,7 +62,7 @@ intersection3f intersect(Scene* scene, ray3f ray) {
     long double length = FLT_MAX;
 
     for(int i = 0 ; i < scene->surfaces.size() ; ++i){
-        if(!scene->surfaces[i]->isquad){
+        if(!scene->surfaces[i]->isquad && !scene->surfaces[i]->iscli){
             vec3f circle = scene->surfaces[i]->frame.o;
             long double radius = scene->surfaces[i]->radius;
             if(pointMul(circle-ray.e, ray.d)<0) continue;
@@ -81,7 +81,47 @@ intersection3f intersect(Scene* scene, ray3f ray) {
                     intersection.mat = scene->surfaces[i]->mat;
                 }
             }
-        }else{
+        }else if(scene->surfaces[i]->iscli){
+            long double radius = scene->surfaces[i]->radius;
+
+            //wall
+            ray.e.x -= scene->surfaces[i]->frame.o.x;
+            ray.e.z -= scene->surfaces[i]->frame.o.z;
+            double wallW = 4 * (ray.d.x*ray.e.x + ray.d.z*ray.e.z) * (ray.d.x*ray.e.x + ray.d.z*ray.e.z) -
+                           4 * (ray.d.x*ray.d.x + ray.d.z*ray.d.z) * (ray.e.x*ray.e.x + ray.e.z*ray.e.z - radius*radius);
+            double t = (-2 * (ray.d.x*ray.e.x + ray.d.z*ray.e.z) - sqrt(abs(wallW))) / (2*(ray.d.x*ray.d.x + ray.d.z*ray.d.z));
+            ray.e.x += scene->surfaces[i]->frame.o.x;
+            ray.e.z += scene->surfaces[i]->frame.o.z;
+            if(wallW > 0 && t > 0){
+                double ty = ray.d.y*t + ray.e.y;
+                if(abs(ty - scene->surfaces[i]->frame.o.y) < scene->surfaces[i]->height/2 &&
+                        t < length && t<ray.tmax && t>ray.tmin){
+                    length = t;
+                    intersection.hit = true;
+                    intersection.ray_t = t;
+                    intersection.pos = ray.e + ray.d*t;
+                    intersection.norm = normalize(intersection.pos - vec3f(scene->surfaces[i]->frame.o.x,intersection.pos.y,scene->surfaces[i]->frame.o.z));
+                    intersection.mat = scene->surfaces[i]->mat;
+                }
+            }
+
+            //caps
+            int twoCap[2] = {1,-1};
+            for(int c = 0 ; c < 2 ; ++c){
+                t = (scene->surfaces[i]->frame.o.y + twoCap[c]*radius/2 - ray.e.y) / ray.d.y;
+                vec3f pos = ray.d * t + ray.e;
+                vec3f cirCap = vec3f(scene->surfaces[i]->frame.o.x, scene->surfaces[i]->frame.o.y+twoCap[c]*radius/2, scene->surfaces[i]->frame.o.z);
+                if(sqrt(pointMul(cirCap-pos,cirCap-pos)) < radius && t < length && t<ray.tmax && t>ray.tmin){
+                    length = t;
+                    intersection.hit = true;
+                    intersection.ray_t = t;
+                    intersection.pos = pos;
+                    intersection.norm = normalize(intersection.pos - vec3f(scene->surfaces[i]->frame.o.x,intersection.pos.y,scene->surfaces[i]->frame.o.z));
+                    intersection.mat = scene->surfaces[i]->mat;
+                }
+            }
+        }
+        else{
             long double vpt = pointMul(ray.d, scene->surfaces[i]->frame.z);//ray.d.x * scene->surfaces[i]->frame.z.x + ray.d.y * scene->surfaces[i]->frame.z.y + ray.d.z * scene->surfaces[i]->frame.z.z;
             if(vpt == 0)    continue;
             long double t = ((scene->surfaces[i]->frame.o.x - ray.e.x) * scene->surfaces[i]->frame.z.x + (scene->surfaces[i]->frame.o.y- ray.e.y) * scene->surfaces[i]->frame.z.y + (scene->surfaces[i]->frame.o.z - ray.e.z) * scene->surfaces[i]->frame.z.z) / vpt;

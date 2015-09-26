@@ -26,6 +26,8 @@ struct Surface {
     frame3f     frame = identity_frame3f;   // frame
     float       radius = 1;                 // radius
     bool        isquad = false;             // whether it's a quad
+    bool        iscli = false;
+    float       height = 0;
     Material*   mat = new Material();       // material
 
     
