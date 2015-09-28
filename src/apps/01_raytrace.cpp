@@ -192,7 +192,7 @@ vec3f raytrace_ray(Scene* scene, ray3f ray,int count) {
             mul = pointMul(intersec.norm, h);
             color += intersec.mat->ks * normalize(scene->lights[i]->intensity) * pow((mul > 0 ? mul : 0),intersec.mat->n);
         }
-        return color = color;
+        return color;
     }
     return scene->background;
     // get scene intersection
@@ -215,11 +215,11 @@ image3f raytrace(Scene* scene) {
     // allocate an image of the proper size
     auto image = image3f(scene->image_width, scene->image_height);
     
+    int anti_h = 10, anti_w = 10;
     offile.open("data.txt");
-    int anti_w = 10, anti_h = 10;
     for(int i = 0 ; i < scene->image_width ; ++i){
        for(int j = 0 ; j < scene->image_height ; ++j){
-//           //anti
+           //anti
 //           vec3f color;
 //           vec3f oriPix(scene->camera->frame.o.x + ((double)i-(scene->image_width)/2.0+0.5) *((double)scene->camera->width /(scene->image_width)),
 //                        scene->camera->frame.o.y + ((double)j-(scene->image_height)/2.0+0.5)*((double)scene->camera->height/(scene->image_height)),
