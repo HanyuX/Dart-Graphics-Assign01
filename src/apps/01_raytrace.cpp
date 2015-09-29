@@ -167,7 +167,7 @@ vec3f raytrace_ray(Scene* scene, ray3f ray,int count) {
         vec3f color(0,0,0);
         for(int i = 0 ; i < scene->lights.size() ; ++i){
             vec3f l = scene->lights[i]->frame.o - intersec.pos;
-            double dis = (abs(dot(l,l))); offile<<dis<<"\r\n";
+            double dis = (abs(dot(l,l)));
             l = normalize(l);
             //ambient
             color += scene->ambient *  (scene->lights[i]->intensity / dis);
@@ -223,8 +223,8 @@ image3f raytrace(Scene* scene) {
            vec3f color;
            for(int m = 0 ; m < scene->image_samples ; ++m){
                for(int n = 0 ; n < scene->image_samples ; ++n){
-                   float u = -0.5 + (i+(m+0.5)/scene->image_samples) / scene->image_width;
-                   float v = -0.5 + (j+(n+0.5)/scene->image_samples) / scene->image_height;
+                   float u = -scene->image_width /2.0  + (i+(m+0.5)/scene->image_samples) / scene->image_width;
+                   float v = -scene->image_height/2.0 + (j+(n+0.5)/scene->image_samples) / scene->image_height;
                    vec3f direction = normalize(u * scene->camera->frame.x + v * scene->camera->frame.y - scene->camera->frame.z);
                    ray3f ray(scene->camera->frame.o, direction);
                    color += raytrace_ray(scene,ray,0);
