@@ -18,5 +18,6 @@
     ],
     "lights": [
         { "frame": { "o": [6,12,6] }, "intensity": [100,100,100] }
-    ]
+    ],
+    "image_samples": 3
 }

@@ -166,14 +166,17 @@ vec3f raytrace_ray(Scene* scene, ray3f ray,int count) {
     if(intersec.hit){
         vec3f color(0,0,0);
         for(int i = 0 ; i < scene->lights.size() ; ++i){
+            vec3f l = scene->lights[i]->frame.o - intersec.pos;
+            double dis = (abs(dot(l,l))); offile<<dis<<"\r\n";
+            l = normalize(l);
             //ambient
-            color += (scene->ambient * intersec.mat->kd *normalize(scene->lights[i]->intensity));
+            color += scene->ambient *  (scene->lights[i]->intensity / dis);
 
             //reflect
             if(intersec.mat->kr != zero3f){
                 vec3f m = 2*(abs(pointMul(ray.d, intersec.norm)) * intersec.norm + ray.d);
                 vec3f newRay = m-ray.d;
-                color += (intersec.mat->kr * raytrace_ray(scene, ray3f(intersec.pos, newRay), count+1));
+                color += (intersec.mat->kr * raytrace_ray(scene, ray3f(intersec.pos, newRay), count+1)) ;
             }
 
             //shadow
@@ -182,15 +185,14 @@ vec3f raytrace_ray(Scene* scene, ray3f ray,int count) {
             if(intersecSha.hit) continue;
 
             //diffuse
-            vec3f l = normalize(scene->lights[i]->frame.o - intersec.pos);
-            double mul = pointMul(intersec.norm,l);
-            color += (intersec.mat->kd * normalize(scene->lights[i]->intensity) * (mul > 0 ? mul : 0));
+            double mul = dot(intersec.norm,l);
+            color += intersec.mat->kd * (scene->lights[i]->intensity/dis) * (mul > 0 ? mul : 0) ;
 
             //specular
             vec3f v = normalize(scene->camera->frame.o - intersec.pos);
             vec3f h = normalize(l + v);
             mul = pointMul(intersec.norm, h);
-            color += intersec.mat->ks * normalize(scene->lights[i]->intensity) * pow((mul > 0 ? mul : 0),intersec.mat->n);
+            color += intersec.mat->ks * (scene->lights[i]->intensity/dis) * pow((mul > 0 ? mul : 0),intersec.mat->n) ;
         }
         return color;
     }
@@ -215,36 +217,31 @@ image3f raytrace(Scene* scene) {
     // allocate an image of the proper size
     auto image = image3f(scene->image_width, scene->image_height);
     
-    int anti_h = 10, anti_w = 10;
     offile.open("data.txt");
     for(int i = 0 ; i < scene->image_width ; ++i){
-       for(int j = 0 ; j < scene->image_height ; ++j){
-           //anti
-//           vec3f color;
-//           vec3f oriPix(scene->camera->frame.o.x + ((double)i-(scene->image_width)/2.0+0.5) *((double)scene->camera->width /(scene->image_width)),
-//                        scene->camera->frame.o.y + ((double)j-(scene->image_height)/2.0+0.5)*((double)scene->camera->height/(scene->image_height)),
-//                        scene->camera->frame.o.z - scene->camera->dist);
-//           for(int m = 0 ; m < anti_w ; ++m){
-//               for(int n = 0 ; n < anti_h ; ++n){
-//                   vec3f nowPix(oriPix.x + ((double)m-(anti_w)/2.0+0.5) *(((double)scene->camera->width /(scene->image_width)) /anti_w),
-//                                oriPix.y + ((double)n-(anti_h)/2.0+0.5) *(((double)scene->camera->height/(scene->image_height))/anti_h),
-//                                oriPix.z);
-//                    ray3f ray(scene->camera->frame.o, normalize(nowPix-scene->camera->frame.o));
-//                    color += raytrace_ray(scene,ray,0);
-//               }
-//           }
-//           color /= anti_h*anti_w;
+      for(int j = 0 ; j < scene->image_height ; ++j){
+           vec3f color;
+           for(int m = 0 ; m < scene->image_samples ; ++m){
+               for(int n = 0 ; n < scene->image_samples ; ++n){
+                   float u = -0.5 + (i+(m+0.5)/scene->image_samples) / scene->image_width;
+                   float v = -0.5 + (j+(n+0.5)/scene->image_samples) / scene->image_height;
+                   vec3f direction = normalize(u * scene->camera->frame.x + v * scene->camera->frame.y - scene->camera->frame.z);
+                   ray3f ray(scene->camera->frame.o, direction);
+                   color += raytrace_ray(scene,ray,0);
+               }
+           }
+           color /= scene->image_samples*scene->image_samples;
 
            //no anti
-           vec3f nowPix(scene->camera->frame.o.x + ((double)i-(scene->image_width)/2.0+0.5) *((double)scene->camera->width /(scene->image_width)),
-                        scene->camera->frame.o.y + ((double)j-(scene->image_height)/2.0+0.5)*((double)scene->camera->height/(scene->image_height)),
-                        scene->camera->frame.o.z - scene->camera->dist);
-           ray3f ray(scene->camera->frame.o, normalize(nowPix-scene->camera->frame.o));
-           vec3f color = raytrace_ray(scene,ray,0);
+//           float u = -0.5 + (i+0.5) / scene->image_width;
+//           float v = -0.5 + (j+0.5) / scene->image_height;
+//           vec3f direction = normalize(u * scene->camera->frame.x + v * scene->camera->frame.y - scene->camera->frame.z);
+//           ray3f ray(scene->camera->frame.o, direction);
+//           vec3f color = raytrace_ray(scene,ray,0);
 
-           image.setPix(i,j,color);
+             image.setPix(i,j,color);
+           }
        }
-    }
     // if no anti-aliasing
         // foreach image row (go over image height)
             // foreach pixel in the row (go over image width)
