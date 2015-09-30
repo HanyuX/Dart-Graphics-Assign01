@@ -165,19 +165,19 @@ vec3f raytrace_ray(Scene* scene, ray3f ray,int count) {
     intersection3f intersec = intersect(scene, ray);
     if(intersec.hit){
         vec3f color(0,0,0);
+        //reflect
+        if(intersec.mat->kr != zero3f){
+            vec3f m = 2*(abs(pointMul(ray.d, intersec.norm)) * intersec.norm + ray.d);
+            vec3f newRay = m-ray.d;
+            color += (intersec.mat->kr * raytrace_ray(scene, ray3f(intersec.pos, newRay), count+1)) ;
+        }
+
         for(int i = 0 ; i < scene->lights.size() ; ++i){
             vec3f l = scene->lights[i]->frame.o - intersec.pos;
             double dis = (abs(dot(l,l))); offile<<dis<<"\r\n";
             l = normalize(l);
             //ambient
             color += scene->ambient *  (scene->lights[i]->intensity / dis);
-
-            //reflect
-            if(intersec.mat->kr != zero3f){
-                vec3f m = 2*(abs(pointMul(ray.d, intersec.norm)) * intersec.norm + ray.d);
-                vec3f newRay = m-ray.d;
-                color += (intersec.mat->kr * raytrace_ray(scene, ray3f(intersec.pos, newRay), count+1)) ;
-            }
 
             //shadow
             ray3f raySha(intersec.pos, normalize(scene->lights[i]->frame.o - (intersec.pos)));
