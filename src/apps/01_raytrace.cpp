@@ -177,7 +177,7 @@ vec3f raytrace_ray(Scene* scene, ray3f ray,int count) {
             double dis = (abs(dot(l,l))); offile<<dis<<"\r\n";
             l = normalize(l);
             //ambient
-            color += scene->ambient *  (scene->lights[i]->intensity / dis);
+            color += scene->ambient *  (scene->lights[i]->intensity);
 
             //shadow
             ray3f raySha(intersec.pos, normalize(scene->lights[i]->frame.o - (intersec.pos)));
